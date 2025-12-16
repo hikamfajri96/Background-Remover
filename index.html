@@ -1,26 +1,44 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Penghapus Background (Fixed Path)</title>
+<div id="remove-bg-tool-container" class="my-blog-tool-wrapper">
+    <!-- Load Tailwind & FontAwesome Scoped -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        /* Scoped Styles: Hanya berlaku di dalam ID ini */
+        #remove-bg-tool-container {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff !important; /* Paksa background putih */
+            color: #1f2937 !important; /* Paksa teks hitam */
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            padding: 0;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        /* Paksa Tombol Download supaya warnanya tidak berubah */
+        #remove-bg-tool-container .force-btn-style {
+            background-color: #16a34a !important; /* Hijau */
+            color: #ffffff !important; /* Putih Mutlak */
+            text-decoration: none !important;
+            font-weight: 700 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
         }
-        .checkerboard {
+        
+        #remove-bg-tool-container .force-btn-style:hover {
+            background-color: #15803d !important; /* Hijau tua saat hover */
+            color: #ffffff !important;
+        }
+
+        /* Checkerboard background untuk hasil transparan */
+        .transparan-bg {
             background-color: #ffffff;
             background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
                               linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
@@ -29,174 +47,193 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
-</head>
-<body class="bg-gray-100 font-sans p-4">
 
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-        <div class="bg-indigo-700 p-6 text-center">
-            <h1 class="text-2xl font-bold text-white mb-2"><i class="fas fa-eraser mr-2"></i>Hapus Background V2</h1>
-            <p class="text-indigo-200 text-sm">Versi Fix dengan External Resource Path</p>
-        </div>
-
-        <div class="p-6">
-            <div id="drop-zone" class="border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center hover:bg-indigo-50 transition cursor-pointer relative">
-                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
-                <div class="space-y-3">
-                    <i class="fas fa-image text-4xl text-indigo-500"></i>
-                    <p class="text-gray-700 font-medium">Pilih Gambar (JPG/PNG)</p>
-                    <p class="text-xs text-gray-400">Pastikan koneksi internet stabil untuk download aset AI (~20MB)</p>
-                </div>
-            </div>
-
-            <!-- Area Debugging (Supaya tau errornya dimana) -->
-            <div id="debug-log" class="mt-4 p-3 bg-black text-green-400 font-mono text-xs h-32 overflow-y-auto rounded hidden">
-                <div>> System Ready...</div>
-            </div>
-
-            <div id="loading-state" class="hidden mt-8 text-center py-6">
-                <div class="flex justify-center mb-3">
-                    <div class="loader"></div>
-                </div>
-                <p class="text-gray-800 font-bold animate-pulse">Sedang Memproses...</p>
-                <p id="loading-text" class="text-sm text-gray-500 mt-2">Menghubungkan ke server model...</p>
-            </div>
-
-            <div id="result-area" class="hidden mt-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <p class="text-xs font-bold text-gray-500">ASLI</p>
-                        <img id="original-image" class="w-full h-48 object-contain bg-gray-50 rounded border" src="" alt="Original">
-                    </div>
-                    <div class="space-y-2">
-                        <p class="text-xs font-bold text-gray-500">HASIL</p>
-                        <div class="w-full h-48 checkerboard rounded border flex items-center justify-center overflow-hidden">
-                            <img id="processed-image" class="max-w-full max-h-full object-contain" src="" alt="Processed">
-                        </div>
-                    </div>
-                </div>
-
-                <button id="download-btn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
-                    <i class="fas fa-download mr-2"></i> Download PNG Transparan
-                </button>
-                <button id="reset-btn" class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-sm">
-                    Coba Gambar Lain
-                </button>
-            </div>
-        </div>
+    <!-- Header Tool -->
+    <div class="bg-blue-600 p-4 text-center">
+        <h2 class="text-white text-lg font-bold m-0" style="color: white !important;">Hapus Background Instan</h2>
+        <p class="text-blue-100 text-xs m-0" style="color: #dbeafe !important;">HD Quality • API Powered</p>
     </div>
 
-    <!-- Gunakan versi UMD agar lebih kompatibel dengan browser lama/WebView -->
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.4/dist/imgly-background-removal.min.js"></script>
+    <div class="p-5">
+        
+        <!-- Setup API Key (Hanya muncul jika belum ada key) -->
+        <div id="setup-panel" class="mb-4 hidden">
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                <p class="text-xs text-yellow-800 font-bold mb-1" style="color: #854d0e !important;">Setup API Key:</p>
+                <input type="text" id="api-key-input" placeholder="Paste API Key Remove.bg disini..." class="w-full text-sm p-2 border rounded mb-2 text-black" style="color: black !important;">
+                <button onclick="saveApiKey()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold py-2 rounded" style="color: white !important;">SIMPAN KEY</button>
+            </div>
+        </div>
 
-    <script>
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        const loadingState = document.getElementById('loading-state');
-        const resultArea = document.getElementById('result-area');
-        const originalImg = document.getElementById('original-image');
-        const processedImg = document.getElementById('processed-image');
-        const downloadBtn = document.getElementById('download-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const debugLog = document.getElementById('debug-log');
-        const loadingText = document.getElementById('loading-text');
-
-        function log(msg) {
-            debugLog.classList.remove('hidden');
-            const div = document.createElement('div');
-            div.innerText = `> ${msg}`;
-            debugLog.appendChild(div);
-            debugLog.scrollTop = debugLog.scrollHeight;
-        }
-
-        // Konfigurasi Publik Path (KUNCI PERBAIKAN)
-        // Kita arahkan browser untuk mengambil aset (model.wasm & onnx) dari CDN yang benar
-        const publicPath = "https://static.img.ly/background-removal-data/1.0.0/";
-
-        fileInput.addEventListener('change', handleFileSelect);
-
-        function handleFileSelect(e) {
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            // Reset UI
-            resultArea.classList.add('hidden');
-            loadingState.classList.remove('hidden');
-            dropZone.classList.add('hidden');
-            debugLog.innerHTML = '<div>> Memulai proses...</div>';
-            debugLog.classList.remove('hidden');
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                originalImg.src = event.target.result;
-                log("Gambar dimuat ke memori browser.");
-                processImage(event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function processImage(imageSrc) {
-            try {
-                log("Menginisialisasi engine AI...");
-                log(`Mengambil model dari: ${publicPath}`);
-
-                // Config Object untuk imgly
-                const config = {
-                    publicPath: publicPath, // INI YANG SEBELUMNYA KURANG
-                    progress: (key, current, total) => {
-                        const percent = Math.round((current / total) * 100);
-                        if (key.includes('fetch')) {
-                            loadingText.innerText = `Download Model AI: ${percent}%`;
-                        } else if (key.includes('compute')) {
-                            loadingText.innerText = `Sedang Menghapus Background: ${percent}%`;
-                        }
-                    },
-                    debug: true // Aktifkan debug internal library
-                };
-
-                // Panggil fungsi global dari script UMD
-                // imglyRemoveBackground adalah fungsi global yang di-expose oleh script CDN
-                const blob = await imglyRemoveBackground(imageSrc, config);
+        <!-- Upload Zone -->
+        <div id="upload-panel">
+            <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer group bg-white">
+                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/png, image/jpeg">
                 
-                log("Proses berhasil! Membuat URL gambar...");
-                const url = URL.createObjectURL(blob);
-                processedImg.src = url;
-
-                downloadBtn.onclick = () => {
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'remove-bg-result-' + Date.now() + '.png';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-
-                loadingState.classList.add('hidden');
-                resultArea.classList.remove('hidden');
-                log("Selesai.");
-
-            } catch (error) {
-                console.error(error);
-                log("ERROR FATAL: " + error.message);
-                log("Cek Console browser untuk detail.");
-                loadingState.innerHTML = `
-                    <div class="text-red-600 font-bold">Gagal Memproses</div>
-                    <div class="text-xs text-left mt-2 p-2 bg-red-50 border border-red-200 text-red-800 overflow-auto">
-                        ${error.message}<br>
-                        <br>
-                        Kemungkinan penyebab:<br>
-                        1. Browser Anda memblokir script pihak ketiga (CORS).<br>
-                        2. Koneksi internet terputus saat download model.<br>
-                        3. WebGL tidak aktif di browser ini.
+                <div class="space-y-2 pointer-events-none">
+                    <div class="mx-auto w-12 h-12 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-cloud-upload-alt text-xl"></i>
                     </div>
-                    <button onclick="location.reload()" class="mt-4 bg-gray-800 text-white px-4 py-2 rounded">Refresh</button>
-                `;
+                    <p class="text-sm font-bold text-gray-700" style="color: #374151 !important;">Upload Foto</p>
+                    <p class="text-xs text-gray-400" style="color: #9ca3af !important;">JPG/PNG (Max 12MB)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading-panel" class="hidden py-6 text-center">
+            <div class="loader mb-2"></div>
+            <p class="text-xs font-semibold text-gray-600" style="color: #4b5563 !important;">Sedang memproses...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="error-panel" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded text-xs border border-red-200 relative">
+            <button onclick="this.parentElement.classList.add('hidden')" class="absolute top-1 right-2 font-bold" style="color: #b91c1c !important;">×</button>
+            <span id="error-text" style="color: #b91c1c !important;">Error message here.</span>
+        </div>
+
+        <!-- Result -->
+        <div id="result-panel" class="hidden mt-4 space-y-4">
+            <!-- Image Container -->
+            <div class="relative w-full h-64 transparan-bg rounded border flex items-center justify-center overflow-hidden">
+                <img id="result-image" src="" class="max-w-full max-h-full object-contain" alt="Hasil">
+            </div>
+
+            <!-- Download Button (FORCED STYLE) -->
+            <a id="download-btn" href="#" download="no-bg.png" class="force-btn-style">
+                <i class="fas fa-download mr-2"></i> Download HD
+            </a>
+            
+            <button onclick="resetApp()" class="w-full text-center text-gray-500 text-xs hover:text-gray-800 underline mt-2" style="color: #6b7280 !important;">
+                Ganti Foto Lain
+            </button>
+        </div>
+
+    </div>
+    
+    <!-- Footer -->
+    <div class="bg-gray-100 p-2 text-center border-t">
+        <button onclick="clearKey()" class="text-[10px] text-gray-400 hover:text-red-500" style="color: #9ca3af !important;">
+            <i class="fas fa-key mr-1"></i>Reset API Key
+        </button>
+    </div>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // === LOGIC ===
+        const setupPanel = document.getElementById('setup-panel');
+        const uploadPanel = document.getElementById('upload-panel');
+        const loadingPanel = document.getElementById('loading-panel');
+        const resultPanel = document.getElementById('result-panel');
+        const errorPanel = document.getElementById('error-panel');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const fileInput = document.getElementById('file-input');
+        const resultImg = document.getElementById('result-image');
+        const downloadBtn = document.getElementById('download-btn');
+        const errorText = document.getElementById('error-text');
+
+        // Check Key on Load
+        // Kita pakai setTimeout biar render HTML selesai dulu
+        setTimeout(() => {
+            const savedKey = localStorage.getItem('rbg_key_v2');
+            if (!savedKey) {
+                setupPanel.classList.remove('hidden');
+            }
+        }, 500);
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key.length < 5) {
+                alert("Key terlalu pendek.");
+                return;
+            }
+            localStorage.setItem('rbg_key_v2', key);
+            setupPanel.classList.add('hidden');
+        }
+
+        function clearKey() {
+            if(confirm("Reset API Key?")) {
+                localStorage.removeItem('rbg_key_v2');
+                location.reload();
             }
         }
 
-        resetBtn.addEventListener('click', () => {
-            location.reload();
+        fileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const apiKey = localStorage.getItem('rbg_key_v2');
+            if (!apiKey) {
+                alert("API Key belum disave!");
+                setupPanel.classList.remove('hidden');
+                fileInput.value = "";
+                return;
+            }
+
+            // UI Reset
+            uploadPanel.classList.add('hidden');
+            resultPanel.classList.add('hidden');
+            errorPanel.classList.add('hidden');
+            loadingPanel.classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('image_file', file);
+            formData.append('size', 'auto');
+
+            try {
+                const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+                    method: 'POST',
+                    headers: { 'X-Api-Key': apiKey },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    let msg = "Gagal memproses.";
+                    if(response.status === 403) {
+                        msg = "API Key Salah. Silakan Reset Key dibawah.";
+                    } else if (response.status === 402) {
+                        msg = "Kuota Gratis Habis.";
+                    } else if (errData.errors) {
+                        msg = errData.errors[0].title;
+                    }
+                    throw new Error(msg);
+                }
+
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+                
+                resultImg.src = imgUrl;
+                downloadBtn.href = imgUrl; // Update link download
+                
+                loadingPanel.classList.add('hidden');
+                resultPanel.classList.remove('hidden');
+
+            } catch (err) {
+                loadingPanel.classList.add('hidden');
+                uploadPanel.classList.remove('hidden');
+                errorPanel.classList.remove('hidden');
+                errorText.innerText = err.message;
+            }
         });
+
+        function resetApp() {
+            resultPanel.classList.add('hidden');
+            uploadPanel.classList.remove('hidden');
+            fileInput.value = "";
+            resultImg.src = "";
+        }
     </script>
-</body>
-</html>
+</div>
